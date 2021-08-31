@@ -42,6 +42,7 @@ var superheroes = [
 
 
 
+
 function transformName(req, res, next) {
     
     if (req.body.name===undefined) {
@@ -51,6 +52,36 @@ function transformName(req, res, next) {
     next()
 };
 
+const testName = (req, res, next) => {
+    const name = req.body.name;
+      console.log("test param",req.body.name)
+    const newsuperHeros = superheroes.findIndex(elem => {
+        return elem.name.toLowerCase() === name
+    })
+    console.log("test name",newsuperHeros);
+
+    if (newsuperHeros===-1) {
+        next();
+    } else {
+        res.json({
+            errorMessage: "Heros dont exist"
+        })
+    }
+    
+  };
+
+
+
+  const deletehero = (req, res, next) => {
+    const heroesremove = req.body.name;
+    superHeroes.map((elem) => {
+      if (elem.name.toLowerCase().splice !== heroesremove.name) {
+          message: "Ce héros n'existe pas !",
+          res.json({
+        });
+      }
+    });
+  };
 
 app.get("/heroes", (req, res) => {
     
@@ -80,7 +111,7 @@ app.get("/heroes/:name/powers", (req, res) => {
     })
 })
 
-app.post("/heroes",transformName, (req, res) => {
+app.post("/heroes",transformName,testName ,(req, res) => {
     
     console.log("body in post", req.body)
     const addheroes = req.body
@@ -92,7 +123,7 @@ app.post("/heroes",transformName, (req, res) => {
 })
 
 
-app.post("/heroes/:name/powers", (req, res) => {
+app.patch("/heroes/:name/powers",  (req, res) => {
    
     const name = req.params.name.toLocaleLowerCase()
    
@@ -114,6 +145,25 @@ app.post("/heroes/:name/powers", (req, res) => {
     });
   }
 })
+ app.delete("/heroes/:name",deletehero,(req,res)=>{
+
+    const name = req.params.name.toLowerCase();
+    const  deleteheroes = superheroes.find(elem => {
+        return  elem.name.toLowerCase().splice!==name;
+
+    })
+    superHeroes = deleteheroes ;
+    console.log(deleteheroes)
+    // if (deleteheroes) {
+    //     superheroes.splice(name, 1);
+        
+    // } 
+    //     res.json({
+    //         message: `Hero ${name} effacé correctement`
+    //     })
+    // }
+})
+
 
 
 app.listen(PORT,()=>( console.log(`this server listing port:${PORT}`)))
