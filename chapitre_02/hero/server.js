@@ -1,18 +1,38 @@
 const express = require("express");
 const app= express();
 const PORT=3000;
-
+const dotenv=require("dotenv")
+dotenv.config({
+	path: "./config.env",
+});
+ const mongoose=require("mongoose")
 app.use(express.json())
 
+mongoose.connect(process.env.DB, {useNewUrlParser: true,})
+	.then(() => {
+		console.log("Connected to MongoDB !");
+	});
+
 const debug=(req,res,next)=>{
-    console.log("server")
+    console.log(" debug:server")
     next()
 }
 
 app.use(debug);
 
+const heroShema = new mongoose.Schema({
+    name: String,
+    power: Array,
+    color: String,
+    isAlive: Boolean,
+    age: Number,
+    image: String,
 
-var superheroes = [
+})
+
+const hero = mongoose.model('hero', heroShema)
+
+hero.insert = [
     {
         name: "Iron Man",
         power: ["money"],
@@ -83,65 +103,68 @@ const testName = (req, res, next) => {
     });
   };
 
-app.get("/heroes", (req, res) => {
-    
+app.get("/heroes",async (req, res) => {
+    const superHeroe=await hero.find()
     res.json({
-        superheroes
+         message:"ok",
+         data: superHeroe
     })
 })
 
-app.get("/heroes/:name", (req, res) =>{
+app.get("/heroes/:name",async (req, res) =>{
     const name = req.params.name
-
-    const heroesfind = superheroes.find(elem => elem.name === name)
+    const heroesfind = await hero.find({name:name})
 
     res.json({
         heroesfind
     })
 })
 
-app.get("/heroes/:name/powers", (req, res) => {
+app.get("/heroes/:name/powers",async (req, res) => {
     const name = req.params.name
 
-    const heroesfind = superheroes.find(elem => {return elem.name.toLowerCase() === name.toLowerCase()})
+    // const heroesfind = superheroes.find(elem => {return elem.name.toLowerCase() === name.toLowerCase()})
     
+    const heroesfind = await hero.findOne({name:name})
+      heroesfind.updateOne({power:name})
 
     res.json({
-        heroesfind: heroesfind.power
+        heroesfind: heroesfind
     })
 })
 
-app.post("/heroes",transformName,testName ,(req, res) => {
+app.post("/heroes",async(req, res) => {
     
     console.log("body in post", req.body)
-    const addheroes = req.body
-       superheroes.push(addheroes)
-
+   
+    const addheroes =await hero.create(req.body)
+      
     res.json({
         message: "OK heroes ajouté."
     })
 })
 
 
-app.patch("/heroes/:name/powers",  (req, res) => {
+app.post("/heroes/:name/powers", async (req, res) => {
    
-    const name = req.params.name.toLocaleLowerCase()
+    const name = req.params.name.toLocaleLowerCase();
+    const heroesfind = await hero.findOne({name :name})
    
 
-    const  heroesfind = superheroes.find(elem => {
-        return name === elem.name.toLowerCase();
-    })
+    
 
     if (heroesfind) {
         const newPower = req.body.power;
-        heroesfind.power.push(newPower);
+        hero.power.push(newPower);
+        heroesfind.updateOne( { powers:newPower })
+ 
     
     res.json({
-        message: "Pouvoir ajouté!"
+        message: "power add"
     })
     } else {
          res.json({
-         errorMessage: 'Heros pas trouvé',
+         errorMessage: 'Hero not found',
     });
   }
 })
